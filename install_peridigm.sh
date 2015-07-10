@@ -22,6 +22,7 @@ R_DIR=${B_DIR}/reports
 # The directory full of source tar files
 T_DIR=${B_DIR}/tarfiles
 
+GCC_URL="https://ftp.gnu.org/gnu/gcc/gcc-5.1.0/gcc-5.1.0.tar.gz"
 BOOST_URL="http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz/download"
 OPENMPI_URL="http://www.open-mpi.org/software/ompi/v1.8/downloads/openmpi-1.8.6.tar.gz"
 HDF5_URL="http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.15-patch1.tar"
@@ -47,12 +48,39 @@ if [[ ! -d ${R_DIR} ]] ; then
 	mkdir -v ${R_DIR}
 fi
 
+
+# # # # # # # # # # # # # # # #
+# GCC
+# # # # # # # # # # # # # # # #
+
+
+echo "---------- GCC    ----------"
+wget -v -O ${T_DIR}/gcc.tar.gz ${GCC_URL} | tee ${R_DIR}/gcc_download_report.txt
+echo "Downloaded"
+
+tar -xzvf ${T_DIR}/gcc.tar.gz
+echo "Extracted"
+
+mkdir -v gcc-bin
+
+cd gcc-bin
+echo "${E_PRINT}${PWD}"
+
+../gcc-1.5.0/configure --prefix=${B_DIR}/gcc-bin --disable-shared | tee ${R_DIR}/gcc_configure_report.txt
+make -j 2 | tee ${R_DIR}/gcc_make_report.txt
+echo "Made"
+make install | tee ${R_DIR}/gcc_install_report.txt
+echo "Installed!"
+
+exit 0
+
+
 # # # # # # # # # # # # # # # #
 # Boost
 # # # # # # # # # # # # # # # #
 
+
 echo "---------- Boost  ----------"
-if false ; then
 # Check to see if we have the most recent version of boost
 if [[ -d `ls | grep boost_` ]] ; then
 	echo "Nada"
@@ -64,7 +92,7 @@ fi
 wget -v -o ${R_DIR}/boost_download_report.txt -O ${T_DIR}/boost.tar.gz ${BOOST_URL}
 echo "Downloaded"
 
-tar -xzf ${T_DIR}/boost.tar.gz -C ${B_DIR} > /dev/null
+tar -xzvf ${T_DIR}/boost.tar.gz -C ${B_DIR} > /dev/null
 echo "Extracted"
 
 # TODO: Automate this for any version of boost
@@ -74,20 +102,17 @@ echo "${E_PRINT}${PWD}"
 # Configure boost
 ./bootstrap.sh > ${R_DIR}/boost_configure_report.txt
 echo "Configured"
+
 # Check to see if boost is already installed
-fi
-cd boost_1_58_0 
-echo "${E_PRINT}${PWD}"
 if [[ -d ${B_DIR}/boost ]] ; then
-	read -p "Reinstall boost? [y/N]  " BOOST_CONFIRM
+	#read -p "Reinstall boost? [y/N]  " BOOST_CONFIRM
 	# TODO: Use prompt to decide
-	rm -r ${B_DIR}/boost
+	#rm -r ${B_DIR}/boost
+	mkdir -v ${B_DIR}/boost
 else
-	#mkdir -v ${B_DIR}/boost
-	echo "asdf"
+	mkdir -v ${B_DIR}/boost
 fi
 
-mkdir -v ${B_DIR}/boost
 
 # Install boost
 ./b2 install --prefix=${B_DIR}/boost > ${R_DIR}/install_report.txt
@@ -101,10 +126,13 @@ echo "Installed!\n"
 
 echo "---------- OpenMPI ----------"
 
-wget -v -o ${R_DIR}/openmpi_download_report.txt -O ${T_DIR}/openmpi.tar.gz ${OPENMPI_URL}
+echo "${L_PRINT}${PWD}"
+cd ${B_DIR}
+
+wget -v -O ${T_DIR}/openmpi.tar.gz ${OPENMPI_URL} | tee ${R_DIR}/openmpi_download_report.txt
 echo "Downloaded"
 
-tar -xzf ${T_DIR}/openmpi.tar.gz
+tar -xzvf ${T_DIR}/openmpi.tar.gz
 echo "Extracted"
 
 cd openmpi-1.8.6
@@ -113,27 +141,35 @@ echo "${E_PRINT}${PWD}"
 # Checking to see if openmpi is already installed
 if [[ -d ${B_DIR}/openmpi-bin ]] ; then
 	# TODO: Prompt to confirm reinstall
-	rm -r openmpi-bin/*
+	#rm -r ${B_DIR}/openmpi-bin
+	mkdir -v ${B_DIR}/openmpi-bin
 else
-	mkdir -v openmpi-bin
+	mkdir -v ${B_DIR}/openmpi-bin
 fi
 
-./configure --prefix="${B_DIR}/openmpi-bin" > ${R_DIR}/openmpi_configure_report.txt
+./configure --prefix="${B_DIR}/openmpi-bin" --disable-shared --enable-static | tee ${R_DIR}/openmpi_configure_report.txt
 echo "Configured"
 
-make all install > ${R_DIR}/openmpi_install_report.txt
+make all | tee ${R_DIR}/openmpi_make_report.txt
+echo "Made"
+make install | tee ${R_DIR}/openmpi_install_report.txt
 echo "Installed!\n"
 
-cd ${B_DIR}
-echo "${L_PRINT}${PWD}"
+export CC=${B_DIR}/openmpi-bin/bin/mpicc
+export CXX=${B_DIR}/openmpi-bin/bin/mpicxx
+export FC=${B_DIR}/openmpi-bin/bin/mpif90
+export F77=${B_DIR}/openmpi-bin/bin/mpif77
 
-
+exit 0
 # # # # # # # # # # # # # # # #
 # HDF5
 # # # # # # # # # # # # # # # #
 
 
 echo "---------- HDF5    ----------"
+
+echo "${L_PRINT}${PWD}"
+cd ${B_DIR}
 
 wget -v -o ${R_DIR}/hdf5_download_report.txt -O ${T_DIR}/hdf5.tar ${HDF5_URL}
 echo "Downloaded"
@@ -144,8 +180,10 @@ echo "Extracted"
 cd hdf5-1.8.15-patch1
 echo "${E_PRINT}${PWD}"
 
+# TODO: Why am I using a var for this?
 if [[ -d ${H5DIR} ]] ; then
-	rm -r ${H5DIR}/*
+	rm -r ${H5DIR}
+	mkdir -v ${H5DIR}
 else
 	mkdir -v ${H5DIR}
 fi
@@ -157,14 +195,16 @@ make > make_report.txt
 make install > install_report.txt
 echo "Installed!"
 
-echo "${L_PRINT}${PWD}"
-cd ..
-
 
 # # # # # # # # # # # # # # # #
 #  NetCDF
 # # # # # # # # # # # # # # # #
 
+
+echo "---------- NetCDF  ----------"
+
+echo "${L_PRINT}${PWD}"
+cd ${B_DIR}
 
 wget -v -o ${B_DIR}/netcdf_download_report.txt -O ${T_DIR}/netcdf.tar.gz ${NETCDF_URL}
 echo "Downloaded"
@@ -172,11 +212,15 @@ echo "Downloaded"
 tar -xzf ${T_DIR}/netcdf.tar.gz
 echo "Extracted"
 
+echo "Don't forget to edit the files!"
+# TODO: Edit files with script
+exit 0
 cd netcdf-4.3.3.1
 echo "${E_PRINT}${PWD}"
 
 if [[ -d ${B_DIR}/netcdf ]] ; then
-	rm -r ${B_DIR}/netcdf/*
+	rm -r ${B_DIR}/netcdf
+	mkdir -v ${B_DIR}/netcdf
 else
 	mkdir -v ${B_DIR}/netcdf
 fi
@@ -192,14 +236,16 @@ make install > ${R_DIR}/netcdf_install_report.txt
 echo "Installed!"
 
 echo "${L_PRINT}${PWD}"
-cd ..
+cd ${B_DIR}
 
-exit 0
 
 # # # # # # # # # # # # # # # #
 #  Trilinos
 # # # # # # # # # # # # # # # #
 
+
+echo "${L_PRINT}${PWD}"
+cd ${B_DIR}
 
 cd trilinos-12.0.1
 echo "${E_PRINT}${PWD}"
