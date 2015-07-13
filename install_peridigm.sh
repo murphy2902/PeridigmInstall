@@ -53,23 +53,29 @@ fi
 # GCC
 # # # # # # # # # # # # # # # #
 
+wget -v -O ${T_DIR}/gcc.tar.gz ${GCC_URL} > ${R_DIR}/gcc_download_report.txt
 
 echo "---------- GCC    ----------"
-wget -v -O ${T_DIR}/gcc.tar.gz ${GCC_URL} | tee ${R_DIR}/gcc_download_report.txt
+GCC_DIR="${B_DIR}/gcc-5.1.0"
 echo "Downloaded"
 
 tar -xzvf ${T_DIR}/gcc.tar.gz
 echo "Extracted"
 
-mkdir -v gcc-bin
+if [[ -d ${B_DIR}/gcc-bin ]] ; then
+	rm -r ${B_DIR}/gcc-bin
+	mkdir -v ${B_DIR}/gcc-bin
+else
+	mkdir -v ${B_DIR}/gcc-bin
+fi
 
 cd gcc-bin
 echo "${E_PRINT}${PWD}"
 
-../gcc-1.5.0/configure --prefix=${B_DIR}/gcc-bin --disable-shared | tee ${R_DIR}/gcc_configure_report.txt
-make -j 2 | tee ${R_DIR}/gcc_make_report.txt
+${GCC_DIR}/configure --prefix=${B_DIR}/gcc-bin --disable-shared > ${R_DIR}/gcc_configure_report.txt
+make -j 2 > ${R_DIR}/gcc_make_report.txt
 echo "Made"
-make install | tee ${R_DIR}/gcc_install_report.txt
+make install > ${R_DIR}/gcc_install_report.txt
 echo "Installed!"
 
 exit 0
