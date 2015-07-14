@@ -28,6 +28,11 @@ OPENMPI_URL="http://www.open-mpi.org/software/ompi/v1.8/downloads/openmpi-1.8.6.
 HDF5_URL="http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.15-patch1.tar"
 NETCDF_URL="ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.3.3.1.tar.gz"
 TRININOS_URL=""
+CLOOR_URL="ftp://ftp.irisa.fr/pub/mirrors/gcc.gnu.org/gcc/infrastructure/cloog-0.18.0.tar.gz"
+ISL_URL="ftp://gcc.gnu.org/pub/gcc/infrastructure/isl-0.14.tar.bz2"
+MPC_URL="ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz"
+MPFR_URL="http://www.mpfr.org/mpfr-current/mpfr-3.1.3.tar.gz"
+GMP_URL="https://ftp.gnu.org/gnu/gmp/gmp-6.0.0a.tar.bz2"
 
 E_PRINT="Entering directory: "
 L_PRINT="Leaving directory: "
@@ -48,19 +53,46 @@ if [[ ! -d ${R_DIR} ]] ; then
 	mkdir -v ${R_DIR}
 fi
 
+# Here we download all of the tar files we will need
 
+[[ ! -e ${T_DIR}/gcc.tar.gz ]] && \
+	wget -v -O ${T_DIR}/gcc.tar.gz ${GCC_URL} > ${R_DIR}/gcc_download_report.txt && \
+	tar -xzvf ${T_DIR}/gcc.tar.gz
+[[ ! -e ${T_DIR}/boost.tar.gz ]] && \
+	wget -v -O ${T_DIR}/boost.tar.gz ${BOOST_URL} > ${R_DIR}/boost_download_report.txt && \
+	tar -xzvf ${T_DIR}/boost.tar.gz
+[[ ! -e ${T_DIR}/openmpi.tar.gz ]] && \
+	wget -v -O ${T_DIR}/openmpi.tar.gz ${OPENMPI_URL} > ${R_DIR}/openmpi_download_report.txt && \
+	tar -xzvf ${T_DIR}/openmpi.tar.gz
+[[ ! -e ${T_DIR}/hdf5.tar ]] && \
+	wget -v -O ${T_DIR}/hdf5.tar ${HDF5_URL} > ${R_DIR}/hdf5_download_report.txt && \
+	tar -xf tarfiles/hdf5.tar
+[[ ! -e ${T_DIR}/netcdf.tar.gz ]] && \
+	wget -v -O ${T_DIR}/netcdf.tar.gz ${NETCDF_URL} > ${R_DIR}/netcdf_download_report.txt && \
+	tar -xzf ${T_DIR}/netcdf.tar.gz
+[[ ! -e ${T_DIR}/mpc.tar.gz ]] && \
+	wget -v -O ${T_DIR}/mpc.tar.gz ${MPC_URL} > ${R_DIR}/mpc_download_report.txt && \
+	tar -xzvf ${T_DIR}/mpc.tar.gz
+[[ ! -e ${T_DIR}/mpfr.tar.gz ]] && \
+	wget -v -O ${T_DIR}/mpfr.tar.gz ${MPFR_URL} > ${R_DIR}/mpfr_download_report.txt && \
+	tar -xzvf ${T_DIR}/mpfr.tar.gz
+[[ ! -e ${T_DIR}/gmp.tar.bz ]] && \
+	wget -v -O ${T_DIR}/gmp.tar.bz ${GMP_URL} > ${R_DIR}/gmp_download_report.txt && \
+	tar -xjvf ${T_DIR}/gmp.tar.bz
+[[ ! -e ${T_DIR}/isl.tar.bz ]] && \
+	wget -v -O ${T_DIR}/isl.tar.bz ${ISL_URL} > ${R_DIR}/isl_download_report.txt && \
+	tar -xjvf ${T_DIR}/isl.tar.bz
+[[ ! -e ${T_DIR}/cloog.tar.gz ]] && \
+	wget -v -O ${T_DIR}/cloog.tar.gz ${CLOOR_URL} > ${R_DIR}/cloog_download_report.txt && \
+	tar -xzvf ${T_DIR}/cloog.tar.gz
+
+exit 0
 # # # # # # # # # # # # # # # #
 # GCC
 # # # # # # # # # # # # # # # #
 
-wget -v -O ${T_DIR}/gcc.tar.gz ${GCC_URL} > ${R_DIR}/gcc_download_report.txt
-
 echo "---------- GCC    ----------"
 GCC_DIR="${B_DIR}/gcc-5.1.0"
-echo "Downloaded"
-
-tar -xzvf ${T_DIR}/gcc.tar.gz
-echo "Extracted"
 
 if [[ -d ${B_DIR}/gcc-bin ]] ; then
 	rm -r ${B_DIR}/gcc-bin
@@ -87,18 +119,8 @@ exit 0
 
 
 echo "---------- Boost  ----------"
-# Check to see if we have the most recent version of boost
-if [[ -d `ls | grep boost_` ]] ; then
-	echo "Nada"
-	# TODO: Check if this is the most recent version of boost
-	# TODO: Prompt reconfigure of boost
-	# TODO: Prompt redownload of boost
-fi
-
-wget -v -o ${R_DIR}/boost_download_report.txt -O ${T_DIR}/boost.tar.gz ${BOOST_URL}
 echo "Downloaded"
 
-tar -xzvf ${T_DIR}/boost.tar.gz -C ${B_DIR} > /dev/null
 echo "Extracted"
 
 # TODO: Automate this for any version of boost
@@ -135,10 +157,8 @@ echo "---------- OpenMPI ----------"
 echo "${L_PRINT}${PWD}"
 cd ${B_DIR}
 
-wget -v -O ${T_DIR}/openmpi.tar.gz ${OPENMPI_URL} | tee ${R_DIR}/openmpi_download_report.txt
 echo "Downloaded"
 
-tar -xzvf ${T_DIR}/openmpi.tar.gz
 echo "Extracted"
 
 cd openmpi-1.8.6
@@ -177,10 +197,8 @@ echo "---------- HDF5    ----------"
 echo "${L_PRINT}${PWD}"
 cd ${B_DIR}
 
-wget -v -o ${R_DIR}/hdf5_download_report.txt -O ${T_DIR}/hdf5.tar ${HDF5_URL}
 echo "Downloaded"
 
-tar -xf tarfiles/hdf5.tar
 echo "Extracted"
 
 cd hdf5-1.8.15-patch1
@@ -212,10 +230,8 @@ echo "---------- NetCDF  ----------"
 echo "${L_PRINT}${PWD}"
 cd ${B_DIR}
 
-wget -v -o ${B_DIR}/netcdf_download_report.txt -O ${T_DIR}/netcdf.tar.gz ${NETCDF_URL}
 echo "Downloaded"
 
-tar -xzf ${T_DIR}/netcdf.tar.gz
 echo "Extracted"
 
 echo "Don't forget to edit the files!"
@@ -248,7 +264,6 @@ cd ${B_DIR}
 # # # # # # # # # # # # # # # #
 #  Trilinos
 # # # # # # # # # # # # # # # #
-
 
 echo "${L_PRINT}${PWD}"
 cd ${B_DIR}
