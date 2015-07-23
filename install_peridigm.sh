@@ -40,12 +40,12 @@ if [[ ! -O ${PWD} ]] ; then
 	exit 1
 fi
 
-# Make the reports directory
+# Make the tarfiles directory
 if [[ ! -d ${T_DIR} ]] ; then
 	mkdir -v ${T_DIR}
 fi
 
-# Make the tarfiles directory
+# Make the reports directory
 if [[ ! -d ${R_DIR} ]] ; then
 	mkdir -v ${R_DIR}
 fi
@@ -54,28 +54,28 @@ fi
 
 [[ ! -e ${T_DIR}/gcc.tar.gz ]] && \
 	wget -v -O ${T_DIR}/gcc.tar.gz ${GCC_URL} | tee ${R_DIR}/gcc_download_report.txt && \
-	tar -xzvf ${T_DIR}/gcc.tar.gz &
+	tar -xzvf ${T_DIR}/gcc.tar.gz
 [[ ! -e ${T_DIR}/boost.tar.gz ]] && \
 	wget -v -O ${T_DIR}/boost.tar.gz ${BOOST_URL} | tee ${R_DIR}/boost_download_report.txt && \
-	tar -xzvf ${T_DIR}/boost.tar.gz &
+	tar -xzvf ${T_DIR}/boost.tar.gz
 [[ ! -e ${T_DIR}/openmpi.tar.gz ]] && \
 	wget -v -O ${T_DIR}/openmpi.tar.gz ${OPENMPI_URL} | tee ${R_DIR}/openmpi_download_report.txt && \
-	tar -xzvf ${T_DIR}/openmpi.tar.gz &
+	tar -xzvf ${T_DIR}/openmpi.tar.gz
 [[ ! -e ${T_DIR}/hdf5.tar ]] && \
 	wget -v -O ${T_DIR}/hdf5.tar ${HDF5_URL} | tee ${R_DIR}/hdf5_download_report.txt && \
-	tar -xf tarfiles/hdf5.tar &
+	tar -xf tarfiles/hdf5.tar
 [[ ! -e ${T_DIR}/netcdf.tar.gz ]] && \
 	wget -v -O ${T_DIR}/netcdf.tar.gz ${NETCDF_URL} | tee ${R_DIR}/netcdf_download_report.txt && \
-	tar -xzf ${T_DIR}/netcdf.tar.gz &
+	tar -xzf ${T_DIR}/netcdf.tar.gz
 [[ ! -e ${T_DIR}/mpc.tar.gz ]] && \
 	wget -v -O ${T_DIR}/mpc.tar.gz ${MPC_URL} | tee ${R_DIR}/mpc_download_report.txt && \
-	tar -xzvf ${T_DIR}/mpc.tar.gz &
+	tar -xzvf ${T_DIR}/mpc.tar.gz
 [[ ! -e ${T_DIR}/mpfr.tar.gz ]] && \
 	wget -v -O ${T_DIR}/mpfr.tar.gz ${MPFR_URL} | tee ${R_DIR}/mpfr_download_report.txt && \
-	tar -xzvf ${T_DIR}/mpfr.tar.gz &
+	tar -xzvf ${T_DIR}/mpfr.tar.gz
 [[ ! -e ${T_DIR}/gmp.tar.bz ]] && \
 	wget -v -O ${T_DIR}/gmp.tar.bz ${GMP_URL} | tee ${R_DIR}/gmp_download_report.txt && \
-	tar -xjvf ${T_DIR}/gmp.tar.bz &
+	tar -xjvf ${T_DIR}/gmp.tar.bz
 [[ ! -e ${T_DIR}/isl.tar.bz ]] && \
 	wget -v -O ${T_DIR}/isl.tar.bz ${ISL_URL} | tee ${R_DIR}/isl_download_report.txt && \
 	tar -xjvf ${T_DIR}/isl.tar.bz
@@ -96,11 +96,12 @@ BOOST_DIR=${ROOT_DIR}/`ls | grep -m 1 "boost"`
 HDF5_DIR=${ROOT_DIR}/`ls | grep -m 1 "hdf5"`
 NETCDF_DIR=${ROOT_DIR}/`ls | grep -m 1 "netcdf"`
 
-if false; then
 
+#if false ; then
 # # # # # # # # # # # # # # # #
 # GMP
 # # # # # # # # # # # # # # # #
+
 
 echo "---------- GMP    ----------"
 cd ${ROOT_DIR}
@@ -167,8 +168,7 @@ cd ${MPC_DIR}
 if [[ -d $MPC_DIR-bin ]] ; then
 	rm -r $MPC_DIR-bin
 	mkdir -v ${MPC_DIR}-bin
-else
-	mkdir -v ${MPC_DIR}-bin
+else mkdir -v ${MPC_DIR}-bin
 fi
 
 ./configure \
@@ -207,10 +207,15 @@ fi
 make | tee ${R_DIR}/isl_make_report.txt
 make install | tee ${R_DIR}/isl_install_report.txt
 
+exit 0
+
+#fi
+
 
 # # # # # # # # # # # # # # # #
 # GCC
 # # # # # # # # # # # # # # # #
+
 
 echo "---------- GCC    ----------"
 cd ${GCC_DIR}
@@ -229,14 +234,13 @@ fi
 --with-gmp=${GMP_DIR}-bin \
 --with-mpfr=${MPFR_DIR}-bin \
 --with-mpc=${MPC_DIR}-bin \
---with-isl=${ISL_DIR}-bin 
+--with-isl=${ISL_DIR}-bin \
 --prefix=${GCC_DIR}-bin | tee ${R_DIR}/gcc_configure_report.txt
 
 
-fi
+cp -R ${GCC_DIR} ../tarfiles/
 
-cd ${GCC_DIR}
-make -j 2 | tee ${R_DIR}/gcc_make_report.txt
+make | tee ${R_DIR}/gcc_make_report.txt
 make install | tee ${R_DIR}/gcc_install_report.txt
 
 echo "Success!"
