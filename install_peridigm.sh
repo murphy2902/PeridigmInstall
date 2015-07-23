@@ -1,8 +1,13 @@
 #!/bin/bash
 
-# Author:  Ryan Murphy, June 2015
+# Authors:  Ryan Murphy 
+#           Dr. Guven
+#           Zachary
+#           Rachel
+#
+# Updated:  7-22-15
 # 
-# This script was built to install Peridigm and its dependencies locally.
+# This script was built to install Peridigm and its dependencies locally and statically.
 
 # If any command fails, exit the script
 set -e
@@ -32,7 +37,7 @@ BOOST_URL="http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0
 HDF5_URL="http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.15-patch1.tar"
 NETCDF_URL="ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.3.3.1.tar.gz"
 TRININOS_URL="http://trilinos.csbsju.edu/download/files/trilinos-12.0.1-Source.tar.gz"
-CLOOR_URL="ftp://ftp.irisa.fr/pub/mirrors/gcc.gnu.org/gcc/infrastructure/cloog-0.18.0.tar.gz"
+CLOOG_URL="ftp://ftp.irisa.fr/pub/mirrors/gcc.gnu.org/gcc/infrastructure/cloog-0.18.0.tar.gz"
 
 # Check to see if we own the install directory
 if [[ ! -O ${PWD} ]] ; then
@@ -51,7 +56,10 @@ if [[ ! -d ${R_DIR} ]] ; then
 fi
 
 # Here we download all of the tar files we will need
-
+# The script checks to see if the tarfile already exists.  If it doesn't, it 
+# downloads and extracts it.  This makes it so that we don't have to repeatedly
+# download tarfiles if the script is run more than once.
+# TODO:  Version control for each of the dependencies
 [[ ! -e ${T_DIR}/gcc.tar.gz ]] && \
 	wget -v -O ${T_DIR}/gcc.tar.gz ${GCC_URL} | tee ${R_DIR}/gcc_download_report.txt && \
 	tar -xzvf ${T_DIR}/gcc.tar.gz
@@ -80,13 +88,16 @@ fi
 	wget -v -O ${T_DIR}/isl.tar.bz ${ISL_URL} | tee ${R_DIR}/isl_download_report.txt && \
 	tar -xjvf ${T_DIR}/isl.tar.bz
 #[[ ! -e ${T_DIR}/cloog.tar.gz ]] && \
-	#wget -v -O ${T_DIR}/cloog.tar.gz ${CLOOR_URL} | tee ${R_DIR}/cloog_download_report.txt && \
+	#wget -v -O ${T_DIR}/cloog.tar.gz ${CLOOG_URL} | tee ${R_DIR}/cloog_download_report.txt && \
 	#tar -xzvf ${T_DIR}/cloog.tar.gz
 #[[ ! -e ${T_DIR}/libelf.tar.gz ]] && \
 	#wget -v -O ${T_DIR}/libelf.tar.gz ${ELF_URL} | tee ${R_DIR}/gmp_download_report.txt && \
 	#tar -xzvf ${T_DIR}/libelf.tar.gz
 
 # The locations that the source files were extracted to
+# In order to match and folder to the correct version, we do a search through
+# the directories only for the base library name.  We add this to the root 
+# directory to get an absolute path to the library.
 GMP_DIR=${ROOT_DIR}/`ls | grep -m 1 "gmp"`
 MPFR_DIR=${ROOT_DIR}/`ls | grep -m 1 "mpfr"`
 MPC_DIR=${ROOT_DIR}/`ls | grep -m 1 "mpc"`
@@ -106,6 +117,9 @@ NETCDF_DIR=${ROOT_DIR}/`ls | grep -m 1 "netcdf"`
 echo "---------- GMP    ----------"
 cd ${ROOT_DIR}
 
+# For safety reasons, we always watch to attempt a fresh install of the
+# binaries.  This logic block will remove any previous install of the software.
+# TODO: Prompt to skip install if already installed.
 if [[ -d $GMP_DIR-bin ]] ; then
 	rm -r $GMP_DIR-bin
 	mkdir -v ${GMP_DIR}-bin
@@ -135,6 +149,9 @@ cd ${ROOT_DIR}
 echo "---------- MPFR   ----------"
 cd ${ROOT_DIR}
 
+# For safety reasons, we always watch to attempt a fresh install of the
+# binaries.  This logic block will remove any previous install of the software.
+# TODO: Prompt to skip install if already installed.
 if [[ -d $MPFR_DIR-bin ]] ; then
 	rm -r $MPFR_DIR-bin
 	mkdir -v ${MPFR_DIR}-bin
@@ -191,6 +208,9 @@ make install | tee ${R_DIR}/mpc_install_report.txt
 echo "---------- ISL    ----------"
 cd ${ISL_DIR}
 
+# For safety reasons, we always watch to attempt a fresh install of the
+# binaries.  This logic block will remove any previous install of the software.
+# TODO: Prompt to skip install if already installed.
 if test -d ${ISL_DIR}-bin ; then
 	rm -r ${ISL_DIR}-bin
 	mkdir -v ${ISL_DIR}-bin
@@ -220,6 +240,9 @@ exit 0
 echo "---------- GCC    ----------"
 cd ${GCC_DIR}
 
+# For safety reasons, we always watch to attempt a fresh install of the
+# binaries.  This logic block will remove any previous install of the software.
+# TODO: Prompt to skip install if already installed.
 if test -d ${GCC_DIR}-bin ; then
 	rm -r ${GCC_DIR}-bin
 	mkdir -v ${GCC_DIR}-bin
@@ -237,13 +260,16 @@ fi
 --with-isl=${ISL_DIR}-bin \
 --prefix=${GCC_DIR}-bin | tee ${R_DIR}/gcc_configure_report.txt
 
-
-cp -R ${GCC_DIR} ../tarfiles/
-
 make | tee ${R_DIR}/gcc_make_report.txt
 make install | tee ${R_DIR}/gcc_install_report.txt
 
 echo "Success!"
+
+# TODO:  We exit here because I have not tested the script to compile boost, etc.  You should be able to continue from here normally, so long as the locations of gcc are updated.
+# ie:
+# export CC=/path/to/gcc/executable
+# export CXX=/path/to/g++/executable
+# etc.
 exit 0
 
 
@@ -255,6 +281,9 @@ exit 0
 echo "---------- Boost  ----------"
 cd ${BOOST_DIR}
 
+# For safety reasons, we always watch to attempt a fresh install of the
+# binaries.  This logic block will remove any previous install of the software.
+# TODO: Prompt to skip install if already installed.
 if test -d ${BOOST_DIR}-bin ; then
 	rm -r ${BOOST_DIR}-bin
 	mkdir -v ${BOOST_DIR}-bin
@@ -307,6 +336,9 @@ export F77=${ROOT_DIR}/openmpi-bin/bin/mpif77
 echo "---------- HDF5    ----------"
 cd ${HDF5_DIR}
 
+# For safety reasons, we always watch to attempt a fresh install of the
+# binaries.  This logic block will remove any previous install of the software.
+# TODO: Prompt to skip install if already installed.
 if [[ -d ${HDF5_DIR}-bin ]] ; then
 	rm -r ${HDF5_DIR}-bin
 	mkdir -v ${HDF5_DIR}-bin
@@ -334,6 +366,9 @@ export LDFLAGS=-L$HDF5_DIR-bin/lib
 echo "---------- NetCDF  ----------"
 cd ${ROOT_DIR}
 
+# For safety reasons, we always watch to attempt a fresh install of the
+# binaries.  This logic block will remove any previous install of the software.
+# TODO: Prompt to skip install if already installed.
 if test -d ${NETCDF_DIR}-bin ; then
 	rm -r ${NETCDF_DIR}-bin
 	mkdir -v ${NETCDF_DIR}-bin
